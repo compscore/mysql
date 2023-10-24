@@ -143,13 +143,13 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 
 	// Check if table exists
 	if optionsStruct.TableExists {
-		query, err := conn.Prepare("SHOW TABLES LIKE ?")
+		query, err := conn.PrepareContext(ctx, "SHOW TABLES LIKE ?")
 		if err != nil {
 			return false, err.Error()
 		}
 		defer query.Close()
 
-		rows, err := query.Query(optionsStruct.Table)
+		rows, err := query.QueryContext(ctx, optionsStruct.Table)
 		if err != nil {
 			return false, err.Error()
 		}
@@ -161,13 +161,13 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 
 	// Check if row exists
 	if optionsStruct.RowExists {
-		query, err := conn.Prepare("SELECT * FROM ? LIMIT 1")
+		query, err := conn.PrepareContext(ctx, "SELECT * FROM ? LIMIT 1")
 		if err != nil {
 			return false, err.Error()
 		}
 		defer query.Close()
 
-		rows, err := query.Query(optionsStruct.Table)
+		rows, err := query.QueryContext(ctx, optionsStruct.Table)
 		if err != nil {
 			return false, err.Error()
 		}
@@ -184,13 +184,13 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 			return false, err.Error()
 		}
 
-		query, err := conn.Prepare("SELECT ? FROM ? LIMIT 1")
+		query, err := conn.PrepareContext(ctx, "SELECT ? FROM ? LIMIT 1")
 		if err != nil {
 			return false, err.Error()
 		}
 		defer query.Close()
 
-		rows, err := query.Query(optionsStruct.Field, optionsStruct.Table)
+		rows, err := query.QueryContext(ctx, optionsStruct.Field, optionsStruct.Table)
 		if err != nil {
 			return false, err.Error()
 		}
@@ -212,13 +212,13 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 
 	// Check if field matches substring or contains substring
 	if optionsStruct.SubstringMatch || optionsStruct.Match {
-		query, err := conn.Prepare("SELECT ? FROM ? LIMIT 1")
+		query, err := conn.PrepareContext(ctx, "SELECT ? FROM ? LIMIT 1")
 		if err != nil {
 			return false, err.Error()
 		}
 		defer query.Close()
 
-		rows, err := query.Query(optionsStruct.Field, optionsStruct.Table)
+		rows, err := query.QueryContext(ctx, optionsStruct.Field, optionsStruct.Table)
 		if err != nil {
 			return false, err.Error()
 		}
