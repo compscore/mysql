@@ -62,52 +62,34 @@ func (o *optionsStruct) Unmarshal(options map[string]interface{}) {
 		}
 	}
 
-	connectInterface, ok := options["connect"]
+	_, ok = options["connect"]
 	if ok {
-		connect, ok := connectInterface.(bool)
-		if ok {
-			o.Connect = connect
-		}
+		o.Connect = true
 	}
 
-	tableExistsInterface, ok := options["table_exists"]
+	_, ok = options["table_exists"]
 	if ok {
-		tableExists, ok := tableExistsInterface.(bool)
-		if ok {
-			o.TableExists = tableExists
-		}
+		o.TableExists = true
 	}
 
-	rowExistsInterface, ok := options["row_exists"]
+	_, ok = options["row_exists"]
 	if ok {
-		rowExists, ok := rowExistsInterface.(bool)
-		if ok {
-			o.RowExists = rowExists
-		}
+		o.RowExists = true
 	}
 
-	regexMatchInterface, ok := options["regex_match"]
+	_, ok = options["regex_match"]
 	if ok {
-		regexMatch, ok := regexMatchInterface.(bool)
-		if ok {
-			o.RegexMatch = regexMatch
-		}
+		o.RegexMatch = true
 	}
 
-	substringMatchInterface, ok := options["substring_match"]
+	_, ok = options["substring_match"]
 	if ok {
-		substringMatch, ok := substringMatchInterface.(bool)
-		if ok {
-			o.SubstringMatch = substringMatch
-		}
+		o.SubstringMatch = true
 	}
 
-	matchInterface, ok := options["match"]
+	_, ok = options["match"]
 	if ok {
-		match, ok := matchInterface.(bool)
-		if ok {
-			o.Match = match
-		}
+		o.Match = true
 	}
 }
 
