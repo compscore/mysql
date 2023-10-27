@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"regexp"
-	"strings"
 )
 
 type optionsStruct struct {
@@ -143,13 +141,14 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 
 	// Check if row exists
 	if optionsStruct.RowExists {
-		query, err := conn.PrepareContext(ctx, "SELECT * FROM ? LIMIT 1")
+		queryStr := fmt.Sprintf("SELECT * FROM %s LIMIT 1", optionsStruct.Table)
+		query, err := conn.PrepareContext(ctx, queryStr)
 		if err != nil {
 			return false, err.Error()
 		}
 		defer query.Close()
 
-		rows, err := query.QueryContext(ctx, optionsStruct.Table)
+		rows, err := query.QueryContext(ctx)
 		if err != nil {
 			return false, err.Error()
 		}
@@ -161,40 +160,46 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 
 	// Check if field matches regex
 	if optionsStruct.RegexMatch {
-		regexp, err := regexp.Compile(expectedOutput)
-		if err != nil {
-			return false, err.Error()
-		}
-
-		query, err := conn.PrepareContext(ctx, "SELECT ? FROM ? LIMIT 1")
+		queryStr := fmt.Sprintf("SELECT %s FROM %s WHERE %s REGEXP ? LIMIT 1", optionsStruct.Field, optionsStruct.Table, optionsStruct.Field)
+		query, err := conn.PrepareContext(ctx, queryStr)
 		if err != nil {
 			return false, err.Error()
 		}
 		defer query.Close()
 
-		rows, err := query.QueryContext(ctx, optionsStruct.Field, optionsStruct.Table)
+		rows, err := query.QueryContext(ctx, expectedOutput)
 		if err != nil {
 			return false, err.Error()
 		}
 
 		if !rows.Next() {
-			return false, fmt.Sprintf("table is empty: \"%s\"", optionsStruct.Table)
-		}
-
-		var field string
-		err = rows.Scan(&field)
-		if err != nil {
-			return false, err.Error()
-		}
-
-		if !regexp.MatchString(field) {
-			return false, fmt.Sprintf("field does not match regex: \"%s\"", expectedOutput)
+			return false, fmt.Sprintf("no results exist that match regex: \"%s\" for field: \"%s\" in table: \"%s\" in database: \"%s\"", expectedOutput, optionsStruct.Field, optionsStruct.Table, optionsStruct.Database)
 		}
 	}
 
-	// Check if field matches substring or contains substring
-	if optionsStruct.SubstringMatch || optionsStruct.Match {
-		query, err := conn.PrepareContext(ctx, "SELECT ? FROM ? LIMIT 1")
+	// Check if field matches substring
+	if optionsStruct.SubstringMatch {
+		queryStr := fmt.Sprintf("SELECT %s FROM %s WHERE %s LIKE ? LIMIT 1", optionsStruct.Field, optionsStruct.Table, optionsStruct.Field)
+		query, err := conn.PrepareContext(ctx, queryStr)
+		if err != nil {
+			return false, err.Error()
+		}
+		defer query.Close()
+
+		rows, err := query.QueryContext(ctx, expectedOutput)
+		if err != nil {
+			return false, err.Error()
+		}
+
+		if !rows.Next() {
+			return false, fmt.Sprintf("no results exist that match substring: \"%s\" for field: \"%s\" in table: \"%s\" in database: \"%s\"", expectedOutput, optionsStruct.Field, optionsStruct.Table, optionsStruct.Database)
+		}
+	}
+
+	// Check if field matches exact string
+	if optionsStruct.Match {
+		queryStr := fmt.Sprintf("SELECT %s FROM %s WHERE %s = ? LIMIT 1", optionsStruct.Field, optionsStruct.Table, optionsStruct.Field)
+		query, err := conn.PrepareContext(ctx, queryStr)
 		if err != nil {
 			return false, err.Error()
 		}
@@ -206,23 +211,8 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 		}
 
 		if !rows.Next() {
-			return false, fmt.Sprintf("table is empty: \"%s\"", optionsStruct.Table)
+			return false, fmt.Sprintf("no results exist that match string: \"%s\" for field: \"%s\" in table: \"%s\" in database: \"%s\"", expectedOutput, optionsStruct.Field, optionsStruct.Table, optionsStruct.Database)
 		}
-
-		var field string
-		err = rows.Scan(&field)
-		if err != nil {
-			return false, err.Error()
-		}
-
-		if optionsStruct.Match && field != expectedOutput {
-			return false, fmt.Sprintf("field does not match string: \"%s\"", expectedOutput)
-		}
-
-		if optionsStruct.SubstringMatch && !strings.Contains(field, expectedOutput) {
-			return false, fmt.Sprintf("field does not contain substring: \"%s\"", expectedOutput)
-		}
-
 	}
 
 	return true, ""
