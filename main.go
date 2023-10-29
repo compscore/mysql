@@ -112,9 +112,6 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 	}
 	defer conn.Close()
 
-	conn.SetConnMaxIdleTime(-1)
-	conn.SetMaxOpenConns(1)
-
 	// Check if connection can be made
 	if optionsStruct.Connect {
 		err = conn.Ping()
@@ -207,7 +204,7 @@ func Run(ctx context.Context, target string, command string, expectedOutput stri
 		}
 		defer query.Close()
 
-		rows, err := query.QueryContext(ctx, optionsStruct.Field, optionsStruct.Table)
+		rows, err := query.QueryContext(ctx, expectedOutput)
 		if err != nil {
 			return false, err.Error()
 		}
